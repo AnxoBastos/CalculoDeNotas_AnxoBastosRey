@@ -4,13 +4,15 @@ declare(strict_types=1);
 if(isset($_POST['enviar'])){
     $data['errores'] = checkForm($_POST);
     $data['input'] = filter_var_array($_POST);
-    if(empty(['errores'])){
+    if(empty($data['errores'])){
         $jsonArray = json_decode($_POST['json_notas'], true);
-        $data['resultado'] = gestonarAsignaturas($jsonArray);
+        $resultado = gestionarAsignaturas($jsonArray);
+        $data['resultado'] = $resultado;
     }
 }
 
 function gestionarAsignaturas(array $asignaturas) : array{
+    $resultado['listaSuspensos'] = array();
     foreach ($asignaturas as $modulo => $alumnos){
         $resultado[$modulo]['media'] = 0;
         $resultado[$modulo]['aprobados'] = 0;
@@ -23,21 +25,25 @@ function gestionarAsignaturas(array $asignaturas) : array{
                 $media += $nota;
             }
             $media = $media/count($notas);
+            if (!isset($resultado['listaSuspensos'][$nombre])) {
+                    $resultado['listaSuspensos'][$nombre] = 0;
+            }
             if ($media >= 5) {
                 $resultado[$modulo]['aprobados']++;
             }
             else{
                 $resultado[$modulo]['suspensos']++;
+                $resultado['listaSuspensos'][$nombre]++;
             }
-            if ($media > $resultado[$modulo]['max']) {
+            if ($media > $resultado[$modulo]['max']['nota']) {
                $resultado[$modulo]['max']['nombre'] = $nombre;
                $resultado[$modulo]['max']['nota'] = $media; 
             }
-            if ($media < $resultado[$modulo]['min']) {
+            if ($media < $resultado[$modulo]['min']['nota']) {
                 $resultado[$modulo]['min']['nombre'] = $nombre;
                 $resultado[$modulo]['min']['nota'] = $media; 
             }
-            $resultado['media'] += $media;
+            $resultado[$modulo]['media'] += $media;
         }
         $resultado[$modulo]['media'] = $resultado[$modulo]['media']/count($alumnos);
     }
